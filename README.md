@@ -290,6 +290,97 @@ curl -X POST http://YOUR_NEW_API_HOST/v1/messages ^
 
 ---
 
+## 🔌 New API 没开 Anthropic 兼容端点怎么办?
+
+Claude Code 是 Anthropic 协议(`/v1/messages`),但 New API 默认只开 OpenAI 协议(`/v1/chat/completions`)。
+**两个不兼容,所以 401。**
+
+### ✅ 方案 A (5 分钟,推荐):让 IT 开 New API 的 Anthropic 兼容端点
+
+把下面这段直接转给 New API 管理员:
+
+> **任务: New API 启用 Anthropic 兼容端点 (一行配置)**
+>
+> 1. 登录 New API 控制台: `http://10.136.232.50:3000`
+> 2. 左侧菜单 → **系统设置** → **API 端点设置**
+> 3. 找到 **"启用 Anthropic 兼容端点"** / **`anthropic_compatible`** 开关
+> 4. 打开它(默认是关的)
+> 5. 确认端点路径是 `/v1/messages` (不是 `/v1/chat/completions`)
+> 6. 保存
+>
+> 验证(在内网机执行):
+> ```bash
+> curl -X POST http://10.136.232.50:3000/v1/messages \
+>   -H "x-api-key: <YOUR_KEY>" \
+>   -H "anthropic-version: 2023-06-01" \
+>   -H "content-type: application/json" \
+>   -d '{"model":"GLM-5.1-AWQ-4bit","max_tokens":10,"messages":[{"role":"user","content":"hi"}]}'
+> ```
+> 期望: 返回 JSON 200,不要 404
+>
+> 启用后,本仓库无需任何改动,直接 `setup.bat`。
+
+### 🛠️ 方案 B (2-3 小时工程):自包含 claude-code-router 桥接
+
+如果 IT 死活不开,我们用 `claude-code-router` 在内网架个桥,把 Claude Code 的 Anthropic 请求实时转成 OpenAI 请求给 New API。
+
+**架构:**
+```
+claude.exe  ──Anthropic 协议──>  127.0.0.1:3456  (ccr 桥)
+                                       │
+                                       └─OpenAI 协议─>  New API (10.136.232.50:3000)
+```
+
+**需要新增到 U 盘:**
+- `node-v22.x.x-win-x64/` (~30MB,完整 Node.js 运行时,因为 ccr 是独立 Node 进程,不能复用 claude.exe 内嵌的 bun-node)
+- `claude-code-router/` (npm pack 打包,~5MB)
+- `ccr-config.json` (桥接配置)
+- `ccr.bat` (启动 ccr 服务的脚本)
+- 改 `run.bat`: 启动 ccr → 设置 `ANTHROPIC_BASE_URL=http://127.0.0.1:3456` → 启动 claude
+- 改 `setup.bat`: 验证 ccr 启动成功 + 验证 New API 端点
+
+**优点:** 不依赖 IT,U 盘完全自包含
+**缺点:** 多一层延迟(实测~50ms 损耗,可忽略),启动多一步,工程量大
+
+### ❌ 方案 C: 不行
+
+改 Claude Code 让它走 OpenAI 协议?——Claude Code 是 Anthropic 官方写死 Anthropic 协议,改不了。改 New API 让它默认是 Anthropic?——同方案 A。
+
+### 决策树
+
+```
+你能不能/愿不愿找 New API IT?
+  ├── 能 → 方案 A(5 分钟搞定,IT 开关一拨)
+  └── 不能/不愿 → 方案 B(我帮你打包 ccr,2-3 小时)
+```
+
+**强烈建议先试 A**,5 分钟 vs 3 小时,差距太大。
+
+### ⚠️ 现场 P0 自检(部署后第一件事)
+
+`setup.bat` Step 4 探测 New API,即使 HTTP 401 也可能误报 OK。**别光看脚本输出,自己验:**
+
+```cmd
+curl -X POST http://YOUR_NEW_API_HOST/v1/messages ^
+  -H "x-api-key: YOUR_KEY" ^
+  -H "anthropic-version: 2023-06-01" ^
+  -H "content-type: application/json" ^
+  -d "{\"model\":\"GLM-5.1-AWQ-4bit\",\"max_tokens\":10,\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"
+```
+
+| 返回 | 意思 | 怎么办 |
+|------|------|--------|
+| `200` + JSON | 链路完美 | 跳过这步,直接用 |
+| `401` | API_KEY 错 或 New API 没开 Anthropic 端点 | 去 New API 后台开 `/v1/messages` 兼容端点,核对 key |
+| `404` | 路径错(默认 Claude Code 找 `/v1/messages`,不是 `/v1/chat/completions`) | 让 New API 管理员确认开启 Anthropic 协议 |
+| `connection refused` | New API 没起 / 端口错 | 检查 New API 服务状态 |
+
+### `claude install` 在气隙下报 ECONNREFUSED
+
+正常现象。`claude install` 会去 `downloads.claude.ai` 查最新版本,气隙环境必失败。setup.bat 已加 `--force` 跳过外网检查,失败也不会影响 run.bat 启动。
+
+---
+
 ## 升级方法
 
 升级只需替换 `claude.exe` 一个文件:
