@@ -1,0 +1,150 @@
+﻿# Claude Code 气隙部署包 - 中文消息字典
+# 格式: [LABEL] 文本 (UTF-8 with BOM)
+# .bat 通过 call :msg LABEL 调用
+
+[DEPLOY_TITLE] Claude Code 2.1.162 内网气隙一键部署
+[DEPLOY_SUBTITLE] Target: Windows x64 + New API (气隙隔离)
+[DEPLOY_BORDER] ============================================
+[DEPLOY_BORDER2] --------------------------------------------
+
+[STEP0_HEADER] ---- 0. 先装依赖 (如果未装) ----
+[STEP0_DETECT] [INFO] 检测到 Git 未安装,先运行依赖安装...
+
+[STEP1_HEADER] ---- 1. 校验二进制 ----
+[STEP1_FATAL] [FATAL] claude.exe 不存在,中止
+[STEP1_OK] [OK] claude.exe 存在
+
+[STEP2_HEADER] ---- 2. 校验 .env ----
+[STEP2_WARN] [WARN] .env 不存在
+[STEP2_HINT]        请先复制 .env.template 为 .env 并填入 New API 地址/Key
+[STEP2_PROMPT] 按 Y 继续 (不推荐),其他键退出:
+[STEP2_INFO] [INFO] 加载 .env ...
+
+[STEP3_HEADER] ---- 3. 关键变量检查 ----
+[STEP3_NO_URL] [FATAL] ANTHROPIC_BASE_URL 未设置
+[STEP3_NO_KEY] [FATAL] ANTHROPIC_API_KEY 未设置
+[STEP3_NO_MODEL] [FATAL] ANTHROPIC_MODEL 未设置
+[STEP3_INFO_URL] [INFO] 目标 New API:
+[STEP3_INFO_MODEL] [INFO] 模型:
+[STEP3_INFO_ISOLATE] [INFO] 隔离模式:
+
+[STEP4_HEADER] ---- 4. 探测 New API 可达性 (内网) ----
+[STEP4_PROBE] [INFO] 探测 New API 连通性 (内网)...
+[STEP4_OK] [OK] New API 可达
+[STEP4_FAIL] [WARN] New API 不可达,稍后 run.bat 会重试
+
+[STEP5_HEADER] ---- 5. 验证外网已隔离 (可选) ----
+[STEP5_CHECK] [INFO] 验证外网已隔离...
+[STEP5_OK] [OK] 外网不可达,气隙确认
+[STEP5_FAIL] [WARN] 仍能访问外网,可能不在气隙环境
+[STEP5_FAIL_HINT]       请检查网络隔离 / 防火墙规则
+
+[STEP6_HEADER] ---- 6. 执行 claude install (非必需,可跳过) ----
+[STEP6_INTRO] [INFO] 关于 shell 集成 (claude install):
+[STEP6_DESC1]        该命令注册 Windows 右键菜单 / PowerShell 补全,非必需
+[STEP6_DESC2]        在气隙环境 claude install 可能失败,但 run.bat 不依赖它
+[STEP6_PROMPT] 是否执行 claude install 试试? (y/N):
+[STEP6_RUN] [INFO] 调用 claude.exe install (可能因外网隔离失败,正常)...
+[STEP6_WARN] [WARN] install 返回码
+[STEP6_SKIP] [SKIP] 已跳过 install,直接用 run.bat 即可
+
+[DEPLOY_DONE_HEADER] 部署完成
+[DEPLOY_DONE_HINT1] 启动:  run.bat              (日常用)
+[DEPLOY_DONE_HINT2] 配置:  install_settings.bat (推送 settings.json)
+[DEPLOY_DONE_HINT3] 卸载:  uninstall.bat
+[DEPLOY_DONE_HINT4] 验证:  verify_airgap.bat
+[DEPLOY_DONE_NOTE1] 注意: 当前是气隙模式,不会触碰外网
+[DEPLOY_DONE_NOTE2]       .env 中所有 DISABLE_*=1 会被 run.bat 自动加载
+[DEPLOY_DONE_PRESS] 按任意键退出...
+
+# ===== run.bat =====
+[RUN_TITLE] Claude Code 气隙启动器
+[RUN_SUBTITLE] - 加载 .env 配置 - 强制注入气隙隔离 - 启动 claude.exe
+[RUN_NO_ENV] [ERROR] .env 不存在,请先从 .env.template 复制并填写
+[RUN_NO_URL] [ERROR] ANTHROPIC_BASE_URL 未设置
+[RUN_NO_KEY] [ERROR] ANTHROPIC_API_KEY 未设置
+[RUN_NO_MODEL] [ERROR] ANTHROPIC_MODEL 未设置
+[RUN_ISOLATE_HEADER] ---- 3. 强制气隙隔离 (硬编码兜底,确保即使 .env 漏配也不触网) ----
+[RUN_ISOLATE_NOTE]       只保留官方文档明确支持的开关,其他瞎写的变量名 Claude Code 不认
+[RUN_LAUNCH] ---- 4. 启动 Claude Code ----
+
+# ===== verify_airgap.bat =====
+[VERIFY_TITLE] Claude Code 气隙环境验证脚本
+[VERIFY_SUBTITLE] 用途: 确认部署后不触碰任何外网
+[VERIFY_DEP_GIT] [1/5] 检查 Git for Windows...
+[VERIFY_DEP_GIT_OK]       [OK] Git 已安装
+[VERIFY_DEP_GIT_FAIL]       [FAIL] git 不在 PATH
+[VERIFY_DEP_VC] [2/5] 检查 VC++ 2015-2022 Redistributable...
+[VERIFY_DEP_VC_OK]       [OK] 已安装
+[VERIFY_DEP_VC_WARN]       [WARN] 未在注册表检测到,可能已通过其他途径安装
+[VERIFY_BIN] [3/5] 检查 claude.exe ...
+[VERIFY_BIN_OK]       [OK] SHA256 校验通过
+[VERIFY_BIN_FAIL]       [FAIL] SHA256 不匹配
+[VERIFY_BIN_ACTUAL]              实际:
+[VERIFY_BIN_EXPECTED]              预期: ac4e1319f6ac0c9e04336d0ae5845acc5dd317bf9e6f26ca47e63df06d91f8bc
+[VERIFY_BIN_MISS]       [FAIL] 文件缺失
+[VERIFY_ENV] [4/5] 检查 .env 配置...
+[VERIFY_ENV_NO_URL]       [FAIL] ANTHROPIC_BASE_URL 未正确配置 (仍是 <NEWAPI_HOST> 占位)
+[VERIFY_ENV_URL_OK]       [OK] ANTHROPIC_BASE_URL 已配置
+[VERIFY_ENV_NO_KEY]       [FAIL] ANTHROPIC_API_KEY 仍是占位符
+[VERIFY_ENV_KEY_OK]       [OK] ANTHROPIC_API_KEY 已配置
+[VERIFY_ENV_ISOLATE_OK]       [OK] 气隙隔离变量已配置
+[VERIFY_ENV_ISOLATE_WARN]       [WARN] 缺气隙隔离变量,run.bat 会强制注入兜底
+[VERIFY_ENV_MISS]       [FAIL] .env 文件不存在
+[VERIFY_NET] [5/5] 验证外网已隔离 (尝试访问 claude.ai)...
+[VERIFY_NET_PASS_OK]       [OK] 外网不可达
+[VERIFY_NET_FAIL]       [FAIL] 仍能访问外网
+[VERIFY_RESULT] 验证结果: PASS=
+[VERIFY_RESULT_FAIL]  FAIL=
+[VERIFY_SUMMARY_FAIL] [状态] 存在
+[VERIFY_SUMMARY_FAIL_END] 个问题,请先解决
+[VERIFY_SUMMARY_PASS] [状态] 全部通过,可以放心使用 run.bat
+
+# ===== install_deps.bat =====
+[DEPS_TITLE] Claude Code 依赖一键安装
+[DEPS_VC_HEADER] 1. 安装 VC++ Redist (静默,无 UI)
+[DEPS_VC_RUN] [1/3] 安装 VC++ 2015-2022 Redistributable...
+[DEPS_VC_OK]       [OK] 已安装 (检测到现有版本)
+[DEPS_VC_WARN]       [WARN] 安装返回码
+[DEPS_VC_MAY_MANUAL] 可能需手动安装
+[DEPS_VC_SKIP] [1/3] [SKIP] vc_redist.x64.exe 缺失
+[DEPS_GIT_HEADER] 2. 安装 Git (静默,Git Bash + 集成到 PATH)
+[DEPS_GIT_RUN] [2/3] 安装 Git for Windows 2.51.2...
+[DEPS_GIT_NOTE]       (Git Bash 必需,Claude Code 依赖其运行)
+[DEPS_GIT_FLAG_NOTE]       /SP- 取消欢迎页, /VERYSILENT 完全静默, /NORESTART 不重启
+[DEPS_GIT_WARN]       [WARN] 安装返回码
+[DEPS_GIT_MANUAL] 可手动双击安装
+[DEPS_GIT_SKIP] [2/3] [SKIP] Git-2.51.2-64-bit.exe 缺失
+[DEPS_VERIFY_HEADER] 3. 校验 PATH 中 git 可用
+[DEPS_VERIFY_RUN] [3/3] 验证 Git...
+[DEPS_VERIFY_WARN]       [WARN] git 不在 PATH,需重启 PowerShell 窗口
+[DEPS_DONE] 依赖安装完成
+[DEPS_DONE_NEXT] 下一步: 回到 ..\ 目录运行 setup.bat
+
+# ===== install_settings.bat =====
+[SETTINGS_HEADER] 把 claude_settings.json 复制到用户配置目录
+[SETTINGS_FAIL] [ERROR] 复制失败
+[SETTINGS_OK] [OK] 设置已写入
+[SETTINGS_NOTE1] 注: 实际生效的密钥仍以 .env 为准
+[SETTINGS_NOTE2]     settings.json 提供默认模型名和权限策略
+
+# ===== uninstall.bat =====
+[UNINSTALL_TITLE] Claude Code 卸载脚本
+[UNINSTALL_PROMPT] 确认卸载 Claude Code? (y/N):
+[UNINSTALL_CANCEL] 已取消
+[UNINSTALL_DEFEND] [WARN] claude.exe 不在
+[UNINSTALL_DEFEND_NOTE]        如需清理 PATH / 右键菜单集成,请手动操作
+[UNINSTALL_OK] [OK] 已卸载
+[UNINSTALL_NOTE] 如需删除本地配置,手动删除: %USERPROFILE%\.claude\
+[UNINSTALL_WARN] [WARN] 卸载返回码:
+
+
+
+# === user-facing prompts & error suffixes (补充) ===
+[PROMPT_CONTINUE_NO_ENV] 按 Y 继续(不推荐),其他键退出:
+[PROMPT_DO_INSTALL] 是否执行 claude install 试试? (y/N):
+[UNINSTALL_CONFIRM] 确认卸载 Claude Code? (y/N):
+[DEPS_VC_MAY_MANUAL_HINT] 可能需手动安装
+[DEPS_GIT_MANUAL_HINT] 可手动双击安装
+[SETUP_RC_SUFFIX] 不影响使用,继续
+[VERIFY_FAIL_SUFFIX] 个问题,请先解决

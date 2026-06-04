@@ -7,6 +7,25 @@
 
 ## ⚠️ 关键澄清 (必读)
 
+### 编码方案 (v3 升级)
+
+本仓库所有 `.bat` / `.ps1` / `messages/zh.txt` 文件**统一采用 UTF-8 with BOM + CRLF 行尾**。
+
+**为什么必须这样**:
+- `chcp 65001` 把控制台**输出**切到 UTF-8 ✓
+- 但 cmd.exe **解析 .bat 文件**时按**系统 OEM 代码页** (中文 Win=936/GBK) 读
+- 文件没 BOM → cmd 不知道是 UTF-8 → 把 `中文` 当 GBK 解 → **乱码**
+- 加 BOM (EF BB BF) → cmd 识别为 UTF-8 文件 → 正确解析 → **正常显示**
+
+**深度方案**: 所有中文**外置**到 `messages/zh.txt` 字典,`.bat` 改为纯 ASCII + `call :msg LABEL` 子例程读字典。这样:
+- `.bat` 文件 100% ASCII,任何 Windows locale 都跑得动
+- 中文改字只需改 `zh.txt` 一处,不用动 `.bat`
+- 永远不会乱码
+
+**添加新中文消息**: 在 `messages/zh.txt` 加一行 `[YOUR_LABEL] 你的中文`,然后在 `.bat` 里 `call :msg YOUR_LABEL` 即可。
+
+---
+
 ### Python 不需要
 
 Claude Code 是 **Go 编写的单文件原生二进制**,自带 Node.js 运行时,**与 Python 无关**。
@@ -42,6 +61,8 @@ claude-code-airgap/
 ├── install_settings.bat           # 推送 settings.json
 ├── install_deps.bat               # 单独装 Git + VC++
 ├── verify_airgap.bat              # 气隙验证 (5 步)
+└── messages/
+    └── zh.txt                     # 中文消息字典 (UTF-8 BOM)
 ├── uninstall.bat                  # 卸载脚本
 ├── 校验.bat                       # 离线 SHA256 校验
 └── dependencies/                  # ⚠️ 需手动放入两个 .exe

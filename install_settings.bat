@@ -1,22 +1,43 @@
-@echo off
-chcp 65001 >nul
+﻿@echo off
+chcp 65001 >nul
+setlocal
+cd /d "%~dp0"
+
+call :msg SETTINGS_HEADER
+echo.
+
+if not exist "claude_settings.json" (
+  call :msg VERIFY_BIN_MISS
+  exit /b 1
+)
+
+set "TARGET_DIR=%USERPROFILE%\.claude"
+set "TARGET_FILE=%TARGET_DIR%\settings.json"
+
+if not exist "%TARGET_DIR%" (
+  mkdir "%TARGET_DIR%"
+)
+
+copy /Y "claude_settings.json" "%TARGET_FILE%" >nul
+if %ERRORLEVEL%==0 (
+  call :msg SETTINGS_OK
+  echo         %TARGET_FILE%
+  echo.
+  call :msg SETTINGS_NOTE1
+  call :msg SETTINGS_NOTE2
+  exit /b 0
+)
+call :msg SETTINGS_FAIL
+exit /b 1
+
+
+REM ===== Sub: print message line from messages\zh.txt by [LABEL] =====
+:msg
 setlocal
-
-REM 把 claude_settings.json 复制到用户配置目录
-set "TARGET_DIR=%USERPROFILE%\.claude"
-set "TARGET_FILE=%TARGET_DIR%\settings.json"
-
-if not exist "%TARGET_DIR%" (
-  mkdir "%TARGET_DIR%"
+for /f "tokens=1* delims=]" %%a in ('findstr /B /C:"[%~1]" "messages\zh.txt" 2^>nul') do (
+    endlocal
+    echo %%b
+    goto :eof
 )
-
-copy /Y "%~dp0claude_settings.json" "%TARGET_FILE%" >nul
-if %ERRORLEVEL% neq 0 (
-  echo [ERROR] 复制失败
-  exit /b 1
-)
-
-echo [OK] 设置已写入 %TARGET_FILE%
-echo.
-echo 注: 实际生效的密钥仍以 .env 为准
-echo     settings.json 提供默认模型名和权限策略
+endlocal
+goto :eof
