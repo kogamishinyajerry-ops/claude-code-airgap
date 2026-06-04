@@ -38,6 +38,7 @@ claude-code-airgap/
 ├── manifest.json                  # 官方发布清单
 ├── setup.bat                      # 一键安装 (装依赖+校验+探测)
 ├── run.bat                        # 启动器 (含气隙隔离兜底)
+├── 启动.ps1                       # PowerShell 入口 (Win10+PS5.1 编码安全)
 ├── install_settings.bat           # 推送 settings.json
 ├── install_deps.bat               # 单独装 Git + VC++
 ├── verify_airgap.bat              # 气隙验证 (5 步)
@@ -158,15 +159,32 @@ install_settings.bat
 
 ### 6. 启动
 
+**方式 A: 命令行解释器 (默认)**
 ```cmd
 run.bat
 ```
 
-或者直接:
-```cmd
-run.bat --help
-run.bat "重构 utils.py"
+**方式 B: PowerShell (推荐,Win10 内网环境首选)**
+
+`启动.ps1` 显式切到 UTF-8 代码页 + 设置控制台编码,**彻底解决 PowerShell 中文乱码**。
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass; .\启动.ps1
+# 或从 cmd / 资源管理器命令行:
+powershell -ExecutionPolicy Bypass -File ".\启动.ps1"
 ```
+
+传参同样支持:
+```powershell
+powershell -ExecutionPolicy Bypass -File ".\启动.ps1" --help
+powershell -ExecutionPolicy Bypass -File ".\启动.ps1" "重构 utils.py"
+```
+
+**为什么用 `启动.ps1` 而非直接 `.\run.bat`**:
+- PowerShell 默认是 GBK 控制台,`run.bat` 里的中文 banner 会在 PowerShell 终端乱码
+- `启动.ps1` 顶部先 `chcp 65001` + 设 `[Console]::OutputEncoding = UTF8`,再调命令行解释器跑 run.bat
+- 健康检查 (claude.exe / .env / run.bat 存在性) 在 PS 阶段就拦下,不会黑屏一闪
+
+> **关于执行策略**:PowerShell 默认 Restricted 不允许跑 .ps1。用 `-ExecutionPolicy Bypass` 是单次放行,不修改全局策略,符合最小权限原则。
 
 ### 7. 验证气隙隔离 (推荐跑一遍)
 
@@ -223,6 +241,8 @@ verify_airgap.bat
 | `connection refused` | New API 不通 | `telnet <newapi-host> <port>` 检查网络 |
 | `VCRUNTIME140.dll` 缺失 | 缺 VC++ 运行时 | 跑 `install_deps.bat` |
 | PowerShell 不认 `claude` 命令 | `install` 没执行或 PATH 没刷新 | 重开终端 |
+| PowerShell 跑 `run.bat` 中文乱码 | 控制台默认 GBK 编码 | 改用 `启动.ps1` (本仓库自带) |
+| PowerShell 拦 `启动.ps1` 不让跑 | 默认 Restricted 执行策略 | 用 `Set-ExecutionPolicy -Scope Process Bypass` 或 `powershell -ExecutionPolicy Bypass -File ".\启动.ps1"` |
 
 ---
 

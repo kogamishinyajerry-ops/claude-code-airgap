@@ -12,6 +12,13 @@ if /i not "%CONFIRM%"=="y" (
   exit /b 0
 )
 
+REM 防御: claude.exe 不在时 (例如只删了 exe 但保留脚本) 不报错
+if not exist "%~dp0claude.exe" (
+  echo [WARN] claude.exe 不在 %~dp0,无需卸载
+  echo        如需清理 PATH / 右键菜单集成,请手动操作
+  exit /b 0
+)
+
 "%~dp0claude.exe" uninstall
 
 set "RC=%ERRORLEVEL%"
