@@ -31,6 +31,9 @@
 [STEP4_HEADER] ---- 4. 探测 New API 可达性 (内网) ----
 [STEP4_PROBE] [INFO] 探测 New API 连通性 (内网)...
 [STEP4_OK] [OK] New API 可达
+[STEP4_WARN_401] [WARN] HTTP 401: 端点存在但 API_KEY 不对,去 New API 后台核对
+[STEP4_WARN_403] [WARN] HTTP 403: 端点存在但拒绝访问,核对 key/模型/渠道
+[STEP4_WARN_404] [WARN] HTTP 404: New API 没开 Anthropic 兼容端点 / 路径错
 [STEP4_FAIL] [WARN] New API 不可达,稍后 run.bat 会重试
 
 [STEP5_HEADER] ---- 5. 验证外网已隔离 (可选) ----
@@ -43,9 +46,11 @@
 [STEP6_INTRO] [INFO] 关于 shell 集成 (claude install):
 [STEP6_DESC1]        该命令注册 Windows 右键菜单 / PowerShell 补全,非必需
 [STEP6_DESC2]        在气隙环境 claude install 可能失败,但 run.bat 不依赖它
+[STEP6_NOTE_AIRGAP] [NOTE] 已加 --force 跳过外网版本检查,失败也无所谓
 [STEP6_PROMPT] 是否执行 claude install 试试? (y/N):
-[STEP6_RUN] [INFO] 调用 claude.exe install (可能因外网隔离失败,正常)...
+[STEP6_RUN] [INFO] 调用 claude.exe install --force (可能因外网隔离失败,正常)...
 [STEP6_WARN] [WARN] install 返回码
+[STEP6_FALLBACK_HINT]        失败正常,run.bat 不依赖它
 [STEP6_SKIP] [SKIP] 已跳过 install,直接用 run.bat 即可
 
 [DEPLOY_DONE_HEADER] 部署完成

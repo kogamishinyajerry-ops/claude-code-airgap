@@ -265,6 +265,29 @@ verify_airgap.bat
 | PowerShell 跑 `run.bat` 中文乱码 | 控制台默认 GBK 编码 | 改用 `启动.ps1` (本仓库自带) |
 | PowerShell 拦 `启动.ps1` 不让跑 | 默认 Restricted 执行策略 | 用 `Set-ExecutionPolicy -Scope Process Bypass` 或 `powershell -ExecutionPolicy Bypass -File ".\启动.ps1"` |
 
+### ⚠️ 现场 P0 自检(部署后第一件事)
+
+`setup.bat` Step 4 探测 New API,即使 HTTP 401 也可能误报 OK。**别光看脚本输出,自己验:**
+
+```cmd
+curl -X POST http://YOUR_NEW_API_HOST/v1/messages ^
+  -H "x-api-key: YOUR_KEY" ^
+  -H "anthropic-version: 2023-06-01" ^
+  -H "content-type: application/json" ^
+  -d "{\"model\":\"GLM-5.1-AWQ-4bit\",\"max_tokens\":10,\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"
+```
+
+| 返回 | 意思 | 怎么办 |
+|------|------|--------|
+| `200` + JSON | 链路完美 | 跳过这步,直接用 |
+| `401` | API_KEY 错 或 New API 没开 Anthropic 端点 | 去 New API 后台开 `/v1/messages` 兼容端点,核对 key |
+| `404` | 路径错(默认 Claude Code 找 `/v1/messages`,不是 `/v1/chat/completions`) | 让 New API 管理员确认开启 Anthropic 协议 |
+| `connection refused` | New API 没起 / 端口错 | 检查 New API 服务状态 |
+
+### `claude install` 在气隙下报 ECONNREFUSED
+
+正常现象。`claude install` 会去 `downloads.claude.ai` 查最新版本,气隙环境必失败。setup.bat 已加 `--force` 跳过外网检查,失败也不会影响 run.bat 启动。
+
 ---
 
 ## 升级方法

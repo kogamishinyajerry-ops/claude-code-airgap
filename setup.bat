@@ -70,9 +70,19 @@ echo         DISABLE_AUTOUPDATER=!DISABLE_AUTOUPDATER!  CLAUDE_CODE_DISABLE_NONE
 REM ---- 4.  New API  () ----
 call :msg STEP4_HEADER
 call :msg STEP4_PROBE
-curl -s -o nul -w "HTTP Status: %%{http_code}\n" --max-time 5 "!ANTHROPIC_BASE_URL!/models" 2>nul
-if %ERRORLEVEL%==0 (
+set HTTP_CODE=
+for /f "tokens=*" %%h in ('curl -s -o nul -w "%%{http_code}" --max-time 5 "!ANTHROPIC_BASE_URL!/models" 2^>nul') do set HTTP_CODE=%%h
+echo         HTTP Status: !HTTP_CODE!
+if "!HTTP_CODE!"=="200" (
   call :msg STEP4_OK
+) else if "!HTTP_CODE!"=="401" (
+  call :msg STEP4_WARN_401
+) else if "!HTTP_CODE!"=="403" (
+  call :msg STEP4_WARN_403
+) else if "!HTTP_CODE!"=="404" (
+  call :msg STEP4_WARN_404
+) else if "!HTTP_CODE!"=="" (
+  call :msg STEP4_FAIL
 ) else (
   call :msg STEP4_FAIL
 )
@@ -94,17 +104,19 @@ call :msg STEP6_INTRO
 call :msg STEP6_DESC1
 call :msg STEP6_DESC2
 echo.
+call :msg STEP6_NOTE_AIRGAP
+echo.
 call :msg PROMPT_DO_INSTALL
 set /p DO_INSTALL=
 if /i "!DO_INSTALL!"=="Y" (
   call :msg STEP6_RUN
-  "%~dp0claude.exe" install
+  "%~dp0claude.exe" install --force
   set RC=!ERRORLEVEL!
   if not "!RC!"=="0" (
     call :msg STEP6_WARN
-    call :msg STEP6_WARN
-  echo         !RC!,
-  call :msg SETUP_RC_SUFFIX
+    echo         !RC!,
+    call :msg SETUP_RC_SUFFIX
+    call :msg STEP6_FALLBACK_HINT
   )
 ) else (
   call :msg STEP6_SKIP
