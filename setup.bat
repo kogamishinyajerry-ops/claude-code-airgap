@@ -34,6 +34,7 @@ if not exist "%~dp0.env" (
   call :msg STEP2_WARN
   call :msg STEP2_HINT
   call :msg PROMPT_CONTINUE_NO_ENV
+  set /p CONTINUE=
   if /i not "!CONTINUE!"=="Y" (
     exit /b 1
   )
@@ -94,6 +95,7 @@ call :msg STEP6_DESC1
 call :msg STEP6_DESC2
 echo.
 call :msg PROMPT_DO_INSTALL
+set /p DO_INSTALL=
 if /i "!DO_INSTALL!"=="Y" (
   call :msg STEP6_RUN
   "%~dp0claude.exe" install

@@ -33,23 +33,32 @@ if ([string]::IsNullOrEmpty($ScriptDir)) {
 Set-Location -LiteralPath $ScriptDir
 
 # ---- 3. 健康检查 (给清晰的错误信息,而不是黑屏一闪) ----
+# 非交互模式防护: try/catch 包裹 Read-Host,异常则不挂
+# (IsInputRedirected 在某些 IDE/host 下不可靠, catch 才是最稳的二层防御)
+function Wait-IfInteractive {
+    try {
+        Read-Host '按 Enter 退出' | Out-Null
+    } catch {
+        # 非交互模式 (stdin=pipe / IDE host) 静默忽略,不影响 exit code
+    }
+}
 if (-not (Test-Path -LiteralPath (Join-Path $ScriptDir 'claude.exe'))) {
     Write-Host '[ERROR] claude.exe 不存在: ' -NoNewline -ForegroundColor Red
     Write-Host (Join-Path $ScriptDir 'claude.exe')
     Write-Host '        请先把 claude.exe (239MB) 放到本目录'
     Write-Host '        下载地址见 README.md 第 3 节 获取大文件'
-    Read-Host '按 Enter 退出'
+    Wait-IfInteractive
     exit 1
 }
 if (-not (Test-Path -LiteralPath (Join-Path $ScriptDir '.env'))) {
     Write-Host '[ERROR] .env 不存在' -ForegroundColor Red
     Write-Host '        Copy-Item .env.template .env; notepad .env'
-    Read-Host '按 Enter 退出'
+    Wait-IfInteractive
     exit 1
 }
 if (-not (Test-Path -LiteralPath (Join-Path $ScriptDir 'run.bat'))) {
     Write-Host '[ERROR] run.bat 不存在,启动中止' -ForegroundColor Red
-    Read-Host '按 Enter 退出'
+    Wait-IfInteractive
     exit 1
 }
 
