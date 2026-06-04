@@ -1,0 +1,22 @@
+# 大文件不进 git 仓库 (.git 单文件限 100MB, GitHub LFS 需额外配)
+# 这些大文件需要手动从 release 或 mirror 下载,见 README.md
+*.exe
+
+# 用户特定配置 (含敏感 API Key)
+.env
+
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.fseventsd
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.tmp
