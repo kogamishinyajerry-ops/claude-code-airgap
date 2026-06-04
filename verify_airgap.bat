@@ -68,10 +68,10 @@ if exist "%~dp0.env" (
 
   findstr /C:"<YOUR_NEWAPI_KEY>" "%~dp0.env" >nul 2>nul
   if !ERRORLEVEL! equ 0 (
-    echo       [FAIL] ANTHROPIC_AUTH_TOKEN 仍是占位符
+    echo       [FAIL] ANTHROPIC_API_KEY 仍是占位符
     set /a FAIL+=1
   ) else (
-    echo       [OK] ANTHROPIC_AUTH_TOKEN 已配置
+    echo       [OK] ANTHROPIC_API_KEY 已配置
   )
 
   findstr /C:"DISABLE_AUTOUPDATER=1" "%~dp0.env" >nul 2>nul

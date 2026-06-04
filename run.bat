@@ -26,8 +26,8 @@ if "!ANTHROPIC_BASE_URL!"=="" (
   echo [ERROR] ANTHROPIC_BASE_URL 未设置
   exit /b 1
 )
-if "!ANTHROPIC_AUTH_TOKEN!"=="" (
-  echo [ERROR] ANTHROPIC_AUTH_TOKEN 未设置
+if "!ANTHROPIC_API_KEY!"=="" (
+  echo [ERROR] ANTHROPIC_API_KEY 未设置
   exit /b 1
 )
 if "!ANTHROPIC_MODEL!"=="" (
@@ -36,13 +36,13 @@ if "!ANTHROPIC_MODEL!"=="" (
 )
 
 REM ---- 3. 强制气隙隔离 (硬编码兜底,确保即使 .env 漏配也不触网) ----
-REM     这些是 Claude Code 识别的官方 DISABLE 开关,=1 即可关闭对应功能
+REM     只保留官方文档明确支持的开关,其他瞎写的变量名 Claude Code 不认
 set DISABLE_AUTOUPDATER=1
-set DISABLE_NONESSENTIAL_TRAFFIC=1
+set DISABLE_FEEDBACK_COMMAND=1
 set DISABLE_ERROR_REPORTING=1
 set DISABLE_TELEMETRY=1
-set DISABLE_INSTALLATION_CHECKS=1
-set DISABLE_GROWTHBOOK=1
+set CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+set DO_NOT_TRACK=1
 
 REM ---- 4. 启动 Claude Code ----
 "%~dp0claude.exe" %*

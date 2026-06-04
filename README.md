@@ -93,6 +93,8 @@ SHA256: `cc0ff0eb1dc3f5188ae6300faef32bf5beeba4bdd6e8e445a9184072096b713b`
    ```
    返回非 5xx 即为就绪。
 
+> **为什么必须用 `ANTHROPIC_API_KEY`**：Claude Code 用 `ANTHROPIC_API_KEY` 才会发 `x-api-key` 头（New API 期望）；`ANTHROPIC_AUTH_TOKEN` 发的是 `Authorization: Bearer ...` 头，New API 的 Anthropic 兼容端点不认，会 401。
+
 ### 1. 拷贝仓库 + 手动放入 3 个 .exe
 
 ```cmd
@@ -118,7 +120,7 @@ notepad .env
 
 ```ini
 ANTHROPIC_BASE_URL=http://10.x.x.x:3000/v1
-ANTHROPIC_AUTH_TOKEN=sk-xxxxxxxxxxxxxx
+ANTHROPIC_API_KEY=sk-xxxxxxxxxxxxxx
 ANTHROPIC_MODEL=GLM-5.1-AWQ-4bit
 ```
 
@@ -198,14 +200,16 @@ verify_airgap.bat
 | 变量 | 作用 |
 |------|------|
 | `ANTHROPIC_BASE_URL` | Claude Code 要打的地址,指向 New API 的 Anthropic 端点 |
-| `ANTHROPIC_AUTH_TOKEN` | New API 的 API Key (Claude Code 用 x-api-key 头) |
+| `ANTHROPIC_API_KEY` | New API 的 API Key (Claude Code 发 `x-api-key` 头) |
 | `ANTHROPIC_MODEL` | 透传给上游的模型名,必须与 New API 渠道名一致 |
 | `DISABLE_AUTOUPDATER` | 关闭 downloads.claude.ai 更新检查 (气隙必需) |
-| `DISABLE_NONESSENTIAL_TRAFFIC` | 关闭所有非必要外网请求 (气隙必需) |
+| `DISABLE_FEEDBACK_COMMAND` | 关闭 `/feedback` 命令回传 (气隙必需) |
 | `DISABLE_ERROR_REPORTING` | 关闭错误上报 (气隙必需) |
 | `DISABLE_TELEMETRY` | 关闭遥测统计 (气隙必需) |
-| `DISABLE_INSTALLATION_CHECKS` | 关闭安装时外网校验 (气隙必需) |
-| `DISABLE_GROWTHBOOK` | 关闭特性开关 (气隙必需) |
+| `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` | 一键合集 = 上面 4 个旧开关,双保险 (气隙必需) |
+| `DO_NOT_TRACK` | 通用"请勿追踪"信号 (气隙必需) |
+
+> 注意：旧名 `DISABLE_NONESSENTIAL_TRAFFIC`（不带前缀）在官方文档中不存在，会被忽略。同理 `DISABLE_INSTALLATION_CHECKS` 和 `DISABLE_GROWTHBOOK` 也不在官方支持列表，已从本仓库删除。
 
 ---
 
@@ -214,7 +218,7 @@ verify_airgap.bat
 | 现象 | 原因 | 解决 |
 |------|------|------|
 | `claude.exe install` 失败 | 杀毒软件拦截 / 外网隔离 | 加入白名单,`run.bat` 不依赖 install |
-| `401 Unauthorized` | API Key 错或绑定的渠道没有该模型 | 在 New API 控制台核对 |
+| `401 Unauthorized` | API Key 错、用错环境变量（`ANTHROPIC_AUTH_TOKEN` 发的是 Bearer 头不是 x-api-key）、或绑定的渠道没有该模型 | 必须用 `ANTHROPIC_API_KEY`；在 New API 控制台核对 Key 和渠道 |
 | `404 model not found` | `ANTHROPIC_MODEL` 与 New API 渠道名不一致 | 严格大小写匹配 |
 | `connection refused` | New API 不通 | `telnet <newapi-host> <port>` 检查网络 |
 | `VCRUNTIME140.dll` 缺失 | 缺 VC++ 运行时 | 跑 `install_deps.bat` |
